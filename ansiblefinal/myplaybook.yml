@@ -4,6 +4,8 @@
   become: yes
   
   vars:
+    image_source: /home/ec2-user/environment/final-project-acs730/ansiblefinal/Screenshot_2024-08-11_110340.png
+    image_dest: /var/www/html/Screenshot_2024-08-11_110340.png
     source_file: ./index.html
     dest_file: /var/www/html/index.html
 
@@ -32,7 +34,15 @@
         dest: "{{ dest_file }}"
         mode: '0555'
       notify: Restart Httpd
-
+      
+    - name: Copy Image file
+      copy:
+        src: "{{ image_source }}"
+        dest: "{{ image_dest }}"
+        mode: '0644'
+      notify: Restart Httpd
+      
+    
   handlers:
     - name: Restart Httpd
       service:

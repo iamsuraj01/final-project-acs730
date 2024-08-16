@@ -1,6 +1,5 @@
 [linux]
-linux3 ansible_host=3.88.227.168
-
+linux3 ansible_host=50.19.130.180
 
 [linux:vars]
 ansible_user = ec2-user 

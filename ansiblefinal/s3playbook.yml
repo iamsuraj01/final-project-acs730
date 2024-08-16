@@ -1,0 +1,11 @@
+---
+- name: Download image from S3 to Cloud9
+  hosts: localhost
+  tasks:
+    - name: Download file from S3
+      amazon.aws.aws_s3:
+        bucket: mybucketfile112
+        object: Screenshot 2024-08-11 110340.png
+        dest: /home/ec2-user/environment/final-project-acs730/ansiblefinal/Screenshot_2024-08-11_110340.png
+        mode: get
+        region: us-east-1
