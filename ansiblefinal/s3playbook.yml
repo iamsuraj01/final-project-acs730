@@ -5,7 +5,7 @@
     - name: Download file from S3
       amazon.aws.aws_s3:
         bucket: mybucketfile112
-        object: sample.png
-        dest: /home/ec2-user/environment/final-project-acs730/ansiblefinal/sample.png
+        object: demo.png
+        dest: /home/ec2-user/environment/final-project-acs730/ansiblefinal/demo.png
         mode: get
         region: us-east-1
