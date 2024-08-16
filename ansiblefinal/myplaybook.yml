@@ -1,9 +1,11 @@
 ---
 - name: Install and verify Apache Web Server on Amazon Linux
-  hosts: linux
+  hosts: tag_testinstance
   become: yes
   
   vars:
+    ansible_user: ec2-user 
+    ansible_ssh_private_key_file: /home/ec2-user/.ssh/testkey
     image_source: /home/ec2-user/environment/final-project-acs730/ansiblefinal/demo.png
     image_dest: /var/www/html/demo.png
     source_file: ./index.html

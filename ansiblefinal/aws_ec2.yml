@@ -1,0 +1,13 @@
+---
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1  # Ensure this matches your region
+filters:
+  tag:Name: testinstance  # Adjust to match your actual tag
+keyed_groups:
+  - key: tags.Name
+    prefix: tag
+hostnames:
+  - tag:Name
+compose:
+  ansible_host: public_ip_address  # or private_ip_address if using a VPC
