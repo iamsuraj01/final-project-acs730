@@ -4,8 +4,8 @@
   become: yes
   
   vars:
-    image_source: /home/ec2-user/environment/final-project-acs730/ansiblefinal/Screenshot_2024-08-11_110340.png
-    image_dest: /var/www/html/Screenshot_2024-08-11_110340.png
+    image_source: /home/ec2-user/environment/final-project-acs730/ansiblefinal/sample.png
+    image_dest: /var/www/html/sample.png
     source_file: ./index.html
     dest_file: /var/www/html/index.html
 
