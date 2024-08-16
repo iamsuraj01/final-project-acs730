@@ -1,0 +1,40 @@
+---
+- name: Install and verify Apache Web Server on Amazon Linux
+  hosts: linux
+  become: yes
+  
+  vars:
+    source_file: ./index.html
+    dest_file: /var/www/html/index.html
+
+  tasks:
+    - name: Install Apache on Amazon Linux
+      yum:
+        name: httpd
+        state: latest
+
+    - name: Start and enable Apache service on Amazon Linux
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Wait for Apache to start
+      wait_for:
+        port: 80
+        state: started
+        delay: 5
+        timeout: 30
+    
+    - name: Copy index.html
+      copy:
+        src: "{{ source_file }}"
+        dest: "{{ dest_file }}"
+        mode: '0555'
+      notify: Restart Httpd
+
+  handlers:
+    - name: Restart Httpd
+      service:
+        name: httpd
+        state: restarted
