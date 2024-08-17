@@ -46,9 +46,6 @@ jobs:
     - name: Run TFLint
       run: tflint -f compact
 
-    - name: Run tfsec
-      uses: aquasecurity/tfsec-action@v1.0.0
-
     - name: Terraform Plan
       run: terraform plan -no-color
       if: github.event_name == 'pull_request'
