@@ -57,6 +57,7 @@
    cp group9.pub ~/.ssh/
    cd ~/.ssh/
    chmod 400 group9
+   cd ~/environment/final-project-acs730/ansiblefinal/
    ansible-playbook -i aws_ec2.yml myplaybook.yml
    ```
 
