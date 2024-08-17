@@ -52,7 +52,7 @@
    Replace bucket name in s3playbook.yml
 
    ```
-   ansible-playbook s3playbook.yml  # it downloads the images from s3 bucket
+   ansible-playbook s3playbook.yml  # it downloads the image from s3 bucket
    cd ~/environment/final-project-acs730/terraform/webserver/
    cp group9 ~/.ssh/
    cp group9.pub ~/.ssh/
