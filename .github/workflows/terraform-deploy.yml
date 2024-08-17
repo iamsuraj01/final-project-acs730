@@ -1,11 +1,42 @@
 name: Terraform CI/CD for Network and Webserver
+
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  security-scans:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v3
+        with:
+          tflint_version: v0.44.1
+
+      - name: Run TFLint
+        run: |
+          tflint --init
+          tflint -f compact
+
   terraform-network:
+    needs: security-scans
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -41,11 +72,12 @@ jobs:
         working-directory: terraform/network
 
       - name: Terraform Apply (Network)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
         working-directory: terraform/network
 
       - name: Network Approval
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: echo "Network infrastructure changes have been applied"
 
   terraform-webserver:
@@ -85,9 +117,10 @@ jobs:
         working-directory: terraform/webserver
 
       - name: Terraform Apply (Webserver)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
         working-directory: terraform/webserver
 
       - name: Webserver Approval
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: echo "Webserver infrastructure changes have been applied"
