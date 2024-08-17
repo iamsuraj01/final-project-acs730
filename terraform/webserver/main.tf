@@ -31,9 +31,9 @@ resource "aws_launch_template" "webserver" {
     security_groups             = [aws_security_group.webserver.id]
   }
 
-  user_data = templatefile("${path.module}/install_httpd.sh", {
+  user_data = base64encode(templatefile("${path.module}/install_httpd.sh", {
     env = var.env
-  })
+  }))
 
   tag_specifications {
     resource_type = "instance"
