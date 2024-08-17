@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
-    bucket = "acs730-final-prod-sgaire3-bucket"
-    key    = "dev/webserver/terraform.tfstate"
+    bucket = "acs-730-final-group9-bucket"
+    key    = "prod/webserver/terraform.tfstate"
     region = "us-east-1"
   }
 }
