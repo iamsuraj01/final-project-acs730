@@ -1,0 +1,93 @@
+name: Terraform CI/CD for Network and Webserver
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform-network:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init (Network)
+        run: terraform init
+        working-directory: terraform/network
+
+      - name: Terraform Validate (Network)
+        run: terraform validate
+        working-directory: terraform/network
+
+      - name: Terraform Plan (Network)
+        run: terraform plan -out=tfplan
+        working-directory: terraform/network
+
+      - name: Terraform Apply (Network)
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform/network
+
+      - name: Network Approval
+        run: echo "Network infrastructure changes have been applied"
+
+  terraform-webserver:
+    needs: terraform-network
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init (Webserver)
+        run: terraform init
+        working-directory: terraform/webserver
+
+      - name: Terraform Validate (Webserver)
+        run: terraform validate
+        working-directory: terraform/webserver
+
+      - name: Terraform Plan (Webserver)
+        run: terraform plan -out=tfplan
+        working-directory: terraform/webserver
+
+      - name: Terraform Apply (Webserver)
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform/webserver
+
+      - name: Webserver Approval
+        run: echo "Webserver infrastructure changes have been applied"
