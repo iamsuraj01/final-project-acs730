@@ -86,9 +86,9 @@ resource "aws_instance" "private_webserver" {
   vpc_security_group_ids = [aws_security_group.private.id]
   subnet_id              = data.terraform_remote_state.network.outputs.private_subnet_ids[count.index]
 
-  user_data = templatefile("${path.module}/install_httpd.sh", {
+ user_data = base64encode(templatefile("${path.module}/install_httpd.sh", {
     env = var.env
-  })
+  }))
 
   tags = {
     Name = "${var.prefix}-${var.env}-private-webserver-${count.index + 1}"
