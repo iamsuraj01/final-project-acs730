@@ -3,15 +3,11 @@ on:
   push:
     branches:
       - main
+
 jobs:
-  terraform:
+  terraform-network:
     runs-on: ubuntu-latest
     environment: prod
-    strategy:
-      matrix:
-        config:
-          - { name: 'network' }
-          - { name: 'webserver' }
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,31 +17,77 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1  # Replace with your desired AWS region
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0  # Replace with your desired Terraform version
+          terraform_version: 1.5.0
 
-      - name: Terraform Init
+      - name: Terraform Init (Network)
         run: terraform init
-        working-directory: terraform/${{ matrix.config }}
+        working-directory: terraform/network
 
-      - name: Terraform Validate
+      - name: Terraform Validate (Network)
         run: terraform validate
-        working-directory: terraform/${{ matrix.config }}
+        working-directory: terraform/network
 
-      - name: Terraform Plan
+      - name: Terraform Plan (Network)
         run: terraform plan -out=tfplan
-        working-directory: terraform/${{ matrix.config }}
+        working-directory: terraform/network
 
-      - name: Terraform Apply
+      - name: Terraform Apply (Network)
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
-        working-directory: terraform/${{ matrix.config }}
-        env:
-          TF_VAR_some_variable: ${{ secrets.TF_VAR_SOME_VARIABLE }}  # Replace with any environment variables required by your Terraform configuration
+        working-directory: terraform/network
 
-      - name: Terraform Approval
-        run: echo "Infrastructure changes for ${{ matrix.config }} have been applied"
+      - name: Network Approval
+        run: echo "Network infrastructure changes have been applied"
+
+  terraform-webserver:
+    needs: terraform-network
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init (Webserver)
+        run: terraform init
+        working-directory: terraform/webserver
+
+      - name: Terraform Validate (Webserver)
+        run: terraform validate
+        working-directory: terraform/webserver
+
+      - name: Terraform Plan (Webserver)
+        run: terraform plan -out=tfplan
+        working-directory: terraform/webserver
+
+      - name: Terraform Apply (Webserver)
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform/webserver
+
+      - name: Webserver Approval
+        run: echo "Webserver infrastructure changes have been applied"
