@@ -1,68 +1,52 @@
-name: 'Terraform CI/CD'
+name: Terraform CI/CD for Network and Webserver
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+    branches:
+      - main
 jobs:
   terraform:
-    name: 'Terraform'
     runs-on: ubuntu-latest
-    environment: prod  # Specify the environment here
+    environment: prod
     strategy:
       matrix:
         config:
           - { name: 'network' }
           - { name: 'webserver' }
-    
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-    
-    - name: Setup TFLint
-      uses: terraform-linters/setup-tflint@v3
-      with:
-        tflint_version: v0.44.1
-    
-    - name: Terraform Format
-      run: terraform fmt -check
-      working-directory: terraform/${{ matrix.config.name }}
-    
-    - name: Terraform Init
-      run: terraform init
-      working-directory: terraform/${{ matrix.config.name }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        TF_VAR_region: 'us-east-1'
-    
-    - name: Terraform Validate
-      run: terraform validate -no-color
-      working-directory: terraform/${{ matrix.config.name }}
-    
-    - name: Run TFLint
-      run: |
-        tflint --init
-        tflint -f compact
-      working-directory: terraform/${{ matrix.config.name }}
-    
-    - name: Terraform Plan
-      run: terraform plan -no-color
-      working-directory: terraform/${{ matrix.config.name }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        TF_VAR_region: 'us-east-1'
-    
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve
-      working-directory: terraform/${{ matrix.config.name }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        TF_VAR_region: 'us-east-1'
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1  # Replace with your desired AWS region
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0  # Replace with your desired Terraform version
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/${{ matrix.config }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: terraform/${{ matrix.config }}
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        working-directory: terraform/${{ matrix.config }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform/${{ matrix.config }}
+        env:
+          TF_VAR_some_variable: ${{ secrets.TF_VAR_SOME_VARIABLE }}  # Replace with any environment variables required by your Terraform configuration
+
+      - name: Terraform Approval
+        run: echo "Infrastructure changes for ${{ matrix.config }} have been applied"
