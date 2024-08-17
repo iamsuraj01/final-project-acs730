@@ -2,116 +2,113 @@ name: Terraform CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    environment: prod
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      - uses: actions/checkout@v3
       
-    - name: Terraform Format
-      run: terraform fmt -check
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
       
-    - name: Terraform Init
-      run: terraform init
+      - name: Terraform Format
+        run: terraform fmt -check
       
-    - name: Terraform Validate
-      run: terraform validate
+      - name: Terraform Init
+        run: terraform init
+      
+      - name: Terraform Validate
+        run: terraform validate
 
   security_scan:
     runs-on: ubuntu-latest
-    environment: prod
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Run tflint
-      uses: terraform-linters/setup-tflint@v3
-      with:
-        tflint_version: v0.44.1
-    - run: tflint --format=sarif > tflint-results.sarif
-    
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        severity: 'CRITICAL,HIGH'
-
-    - name: Upload tflint scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
-      if: always()
-      with:
-        sarif_file: 'tflint-results.sarif'
-
-    - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - uses: actions/checkout@v3
+      
+      - name: Run tflint
+        uses: terraform-linters/setup-tflint@v3
+        with:
+          tflint_version: v0.44.1
+      - run: tflint --format=sarif > tflint-results.sarif
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload tflint scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'tflint-results.sarif'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
 
   plan:
     needs: [validate, security_scan]
     runs-on: ubuntu-latest
-    environment: prod
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-session-key: ${{ secrets.AWS_SESSION_KEY }}
-        aws-region: us-east-1
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      - uses: actions/checkout@v3
       
-    - name: Terraform Init
-      run: terraform init
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
       
-    - name: Terraform Plan
-      run: terraform plan -out=tfplan
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
       
-    - name: Upload Terraform Plan
-      uses: actions/upload-artifact@v2
-      with:
-        name: tfplan
-        path: tfplan
+      - name: Terraform Init
+        run: terraform init
+      
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+      
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfplan
+          path: tfplan
 
   apply:
     needs: plan
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: prod
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      - uses: actions/checkout@v3
       
-    - name: Terraform Init
-      run: terraform init
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
       
-    - name: Download Terraform Plan
-      uses: actions/download-artifact@v2
-      with:
-        name: tfplan
-    
-    - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      
+      - name: Terraform Init
+        run: terraform init
+      
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v3
+        with:
+          name: tfplan
+      
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
