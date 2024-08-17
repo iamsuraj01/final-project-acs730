@@ -1,13 +1,11 @@
 ---
-plugin: amazon.aws.aws_ec2
+plugin: aws_ec2
 regions:
-  - us-east-1  
-filters:
-  tag:Name: group9 
+  - us-east-1
 keyed_groups:
-  - key: tags.Name
+  - key: tags.Owner
     prefix: tag
-hostnames:
-  - tag:Name
+filters:
+  instance-state-name : running
 compose:
-  ansible_host: public_ip_address  
+  ansible_host: public_ip_address
