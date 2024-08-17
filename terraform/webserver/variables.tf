@@ -15,7 +15,7 @@ variable "instance_type" {
 }
 
 variable "state_bucket" {
-  default = "acs-730-final-group9-bucket"
+  default     = "acs-730-final-group9-bucket"
   description = "S3 bucket containing the network state file"
 }
 
