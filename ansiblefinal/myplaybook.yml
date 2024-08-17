@@ -1,6 +1,6 @@
 ---
 - name: Install and verify Apache Web Server on Amazon Linux
-  hosts: tag_group9
+  hosts: tag_acs730
   become: yes
   gather_facts: True
   vars:
