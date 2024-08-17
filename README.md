@@ -1,6 +1,4 @@
 # final-project-acs730
-# Automated Deployment with Terraform and GitHub Actions
-
 ## Pre-Requirements
 
 - An AWS account with appropriate permissions for creating resources
